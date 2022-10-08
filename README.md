@@ -88,5 +88,5 @@ So far we’ve seen one passing test and one failing test. However, pass and fai
 * XPASS (X)—The test was marked with xfail, but it ran and passed.
 * ERROR (E)—An exception happened either during the execution of a fixture or hook function, and not during the execution of a test function. Fixtures are discussed in Chapter 3, pytest Fixtures, on page 31, and hook functions are discussed in Chapter 15, Building Plugins, on page 205.
 
-
+# 2. Writing Test Functions
 
