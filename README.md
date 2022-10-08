@@ -3,39 +3,26 @@
 ## Part I - Primary Power
 
 ### 1. Getting Started with pytest
-
 ### 2. Writing Test Functions
-
 ### 3. pytest Fixtures
-
 ### 4. Builtin Fixtures
-
 ### 5. Parametrization
-
 ### 6. Markers
 
 ## Part II - Working with Projects
 
 ### 7. Strategy
-
 ### 8. Configuration Files
-
 ### 9. Coverage
-
 ### 10. Mocking
-
 ### 11. tox and Continuous Integration
-
 ### 12. Testing Scripts and Applications
-
 ### 13. Debugging Test Failures
 
 ## Part III - Booster Rockets
 
 ### 14. Third-Party Plugins
-
 ### 15. Building Plugins
-
 ### 16. Advanced Parametrization
 
 ---
@@ -339,3 +326,122 @@ Running the whole directory:
 ```bash
 $ pytest ch2
 ```
+
+# 3. pytest Fixtures
+
+## Introduction
+
+Now that you’ve used pytest to write and run test functions, let’s turn our attention to test helper functions called fixtures, which are essential to structuring test code for almost any non-trivial software system. Fixtures are functions that are run by pytest before (and sometimes after) the actual test functions. The code in the fixture can do whatever you want it to. You can use fixtures to get a data set for the tests to work on. You can use fixtures to get a system into a known state before running a test. Fixtures are also used to get data ready for multiple tests.
+
+## Getting started with fixtures
+
+Here’s a simple fixture that returns a number:
+
+```python
+import pytest
+
+
+@pytest.fixture()
+def some_data():
+  """Return answer to ultimate question."""
+  return 42
+
+
+def test_some_data(some_data):
+  """Use fixture return value in a test."""
+  assert some_data == 42
+```
+
+The @pytest.fixture() decorator is used to tell pytest that a function is a fixture. When you include the fixture name in the parameter list of a test function, pytest knows to run it before running the test. Fixtures can do work, and can also return data to the test function.
+
+You don’t need to have a complete understanding of Python decorators to use the decorators included with pytest. pytest uses decorators to add functionality and features to other functions. In this case, pytest.fixture() is decorating the some_data() function. The test, test_some_data(), has the name of the fixture, some_data, as a parameter. pytest will see this and look for a fixture with this name.
+
+The term fixture has many meanings in the programming and test community, and even in the Python community. I use “fixture,” “fixture function,” and “fixture method” interchangeably to refer to the @pytest.fixture() decorated functions discussed in this chapter. Fixture can also be used to refer to the resource that is being set up by the fixture functions. Fixture functions often set up or retrieve some data that the test can work with. Sometimes this data is considered a fixture. For example, the Django community often uses fixture to mean some initial data that gets loaded into a database at the start of an application.
+
+Regardless of other meanings, in pytest and in this book, test fixtures refer to the mechanism pytest provides to allow the separation of “getting ready for” and “cleaning up after” code from your test functions.
+
+pytest treats exceptions differently during fixtures compared to during a test function. An exception (or assert failure or call to pytest.fail()) that happens during the test code proper results in a “Fail” result. However, during a fixture, the test function is reported as “Error.” This distinction is helpful when debugging why a test didn’t pass. If a test results in “Fail,” the failure is somewhere in the test function (or something the function called). If a test results in “Error,” the failure is somewhere in a fixture.
+
+pytest fixtures are one of the unique core features that make pytest stand out above other test frameworks, and are the reason why many people switch to and stay with pytest. There are a lot of features and nuances about fixtures. Once you get a good mental model of how they work, they will seem easy to you. However, you have to play with them a while to get there, so let’s do that next.
+
+## Using Fixtures for setup and teardown
+
+These problems are resolved with a pytest fixture:
+
+```Python
+import pytest
+import cards
+
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+
+@pytest.fixture()
+def cards_db():
+  with TemporaryDirectory() as db_dir:
+    db_path = Path(db_dir)
+    db = cards.CardsDB(db_path)
+
+    yield db
+    db.close()
+
+
+def test_empty(cards_db):
+  assert cards_db.count() == 0
+```
+
+Right off the bat we can see that the test function itself is way easier to read, as we’ve pushed all the database initialization into a fixture called cards_db.
+
+The cards_db fixture is “setting up” for the test by getting the database ready. It’s then yield-ing the database object. That’s when the test gets to run. And then after the test runs, it closes the database.
+
+Fixture functions run before the tests that use them. If there is a yield in the function, it stops there, passes control to the tests, and picks up on the next line after the tests are done. The code above the yield is “setup” and the code after yield is “teardown.” The code after the yield, the teardown, is guaranteed to run regardless of what happens during the tests.
+
+In our example, the yield happens within a context manager with block for the temporary directory. That directory stays around while the fixture is in use and the tests run. After the test is done, control passes back to the fixture, the db.close() can run, and then the with block can complete and clean up the directory.
+
+## Specifying Fixture Scope
+
+Each fixture has a specific scope, which defines the order of when the setup and teardown run relative to running of all the test function using the fixture. The scope dictates how often the setup and teardown get run when it’s used by multiple test functions.
+
+The default scope for fixtures is function scope. That means the setup portion of the fixture will run before each test that needs it runs. Likewise, the teardown portion runs after the test is done, for each test.
+
+However, there may be times when you don’t want that to happen. Perhaps setting up and connecting to the database is time-consuming, or you are generating large sets of data, or you are retrieving data from a server or a slow device. Really, you can do anything you want within a fixture, and some of that may be slow.
+
+I could show you an example where I put a time.sleep(1) statement in the fixture when we are connecting to the database to simulate a slow resource, but I think it suffices that you imagine it. So, if we want to avoid that slow connection twice in our example, or imagine 100 seconds for a hundred tests, we can change the scope such that the slow part happens once for multiple tests.
+
+Let’s change the scope of our fixture so the database is only opened once, and then talk about different scopes.
+
+It’s a one-line change, adding scope="module" to the fixture decorator:
+
+```python
+import pytest
+import cards
+
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+
+@pytest.fixture(scope="module")
+def cards_db():
+  with TemporaryDirectory() as db_dir:
+    db_path = Path(db_dir)
+    db = cards.CardsDB(db_path)
+    yield db
+    db.close()
+```
+
+The fixture decorator scope parameter allows more than function and module. There’s also class, package, and session. The default scope is function.
+
+Here’s a rundown of each scope value:
+
+* scope='function'
+   * Run once per test function. The setup portion is run before each test using the fixture. The teardown portion is run after each test using the fixture. This is the default scope used when no scope parameter is specified.
+* scope='class'
+   * Run once per test class, regardless of how many test methods are in the class.
+* scope='module'
+   * Run once per module, regardless of how many test functions or methods or other fixtures in the module use it.
+* scope='package'
+   * Run once per package, or test directory, regardless of how many test functions or methods or other fixtures in the package use it.
+* scope='session'
+   * Run once per session. All test methods and functions using a fixture of session scope share one setup and teardown call.
+
+Scope is defined with the fixture. I know this is obvious from the code, but it’s an important point to make sure you fully grok. The scope is set at the definition of a fixture, and not at the place where it’s called. The test functions that use a fixture don’t control how often a fixture is set up and torn down.
