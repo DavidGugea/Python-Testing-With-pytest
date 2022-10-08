@@ -611,3 +611,27 @@ It also has the benefit of many test functions being able to run with the same s
 
 Fixture parametrization is also a different way to think about the same problem. Even in the case of testing finish(), if I’m thinking about it in terms of “same test, different data,” I often gravitate toward function parametrization. But if I’m thinking about it as “same test, different start state,” I gravitate toward fixture parametrization
 
+# 6. Markers
+
+## What are markers
+
+In pytest, markers are a way to tell pytest there’s something special about a particular test. You can think of them like tags or labels. If some tests are slow, you can mark them with @pytest.mark.slow and have pytest skip those tests when you’re in a hurry. You can pick a handful of tests out of a test suite and mark them with @pytest.mark.smoke and run those as the first stage of a testing pipeline in a continuous integration system. Really, for any reason you might have for separating out some tests, you can use markers.
+
+## Using Builtin Markers
+
+pytest’s builtin markers are used to modify the behavior of how tests run. We explored @pytest.mark.parametrize() in the last chapter. Here’s the full list of the builtin markers included in pytest as of pytest 6:
+
+* @pytest.mark.filterwarnings(warning): This marker adds a warning filter to the given test.
+* @pytest.mark.skip(reason=None): This marker skips the test with an optional reason.
+* @pytest.mark.skipif(condition, ..., *, reason): This marker skips the test if any of the conditions are True.
+* @pytest.mark.xfail(condition, ..., *, reason, run=True, raises=None, strict=xfail_strict): This marker tells pytest that we expect the test to fail.
+* @pytest.mark.parametrize(argnames, argvalues, indirect, ids, scope): This marker calls a test function multiple times, passing in different arguments in turn.
+* @pytest.mark.usefixtures(fixturename1, fixturename2, ...): This marker marks tests as needing all the specified fixtures.
+
+These are the most commonly used of these builtins:
+
+* @pytest.mark.parametrize()
+* @pytest.mark.skip()
+* @pytest.mark.skipif()
+* @pytest.mark.xfail()
+
