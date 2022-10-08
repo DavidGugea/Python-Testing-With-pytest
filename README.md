@@ -449,3 +449,165 @@ Scope is defined with the fixture. I know this is obvious from the code, but it�
 # 4. Builtin Fixtures
 
 \-
+
+# 5. Parametrization
+
+## What is parametrization
+
+In the last couple of chapters, we looked at custom and builtin fixtures. In this chapter, we return to test functions. We’ll look at how to turn one test function into many test cases to test more thoroughly with less work. We’ll do this with parametrization.
+
+Parametrized testing refers to adding parameters to our test functions and passing in multiple sets of arguments to the test to create new test cases. We’ll look at three ways to implement parametrized testing in pytest in the order in which they should be selected:
+
+* Parametrizing functions
+* Parametrizing fixtures
+* Using a hook function called pytest_generate_tests
+
+We’ll compare them side by side by solving the same parametrization problem using all three methods; however, as you’ll see, there are times when one solution is preferred over the others.
+
+Before we really jump in to how to use parametrization, though, we’ll take a look at the redundant code we are avoiding with parametrization. Then we’ll look at three methods of parametrization. When we’re done, you’ll be able to write concise, easy-to-read test code that tests a huge number of test cases.
+
+## Testing Without Parametrize
+
+Sending some values through a function and checking the output to make sure it’s correct is a common pattern in software testing. However, calling a function once with one set of values and one check for correctness isn’t enough to fully test most functions. Parametrized testing is a way to send multiple sets of data through the same test and have pytest report if any of the sets failed.
+
+To help understand the problem parametrized testing is trying to solve, let’s write some tests for the finish() API method:
+
+```python
+def finish(self, card_id: int):
+    """Set a card state to 'done'."""
+    self.update_card(card_id, Card(state="done"))
+```
+
+The states used in the application are “todo,” “in prog,” and “done,” and this method sets a card’s state to “done.”
+
+To test this, we could * create a Card object and add it to the database, so we have a Card to work with,
+
+* call finish(), and
+* make sure the end state is “done.”
+
+One variable is the start state of the Card. It could be “todo,” “in prog,” or even already “done.”
+
+Let’s test all three. Here’s a start:
+
+```python
+from cards.api import Card
+
+
+def test_finish_from_in_prog(cards_db):
+  index = cards_db.add_card(Card("second edition", state="in prog"))
+  cards_db.finish(index)
+  card = cards_db.get_card(index)
+  assert card.state == "done"
+
+
+def test_finish_from_done(cards_db):
+  index = cards_db.add_card(Card("write a book", state="done"))
+  cards_db.finish(index)
+  card = cards_db.get_card(index)
+  assert card.state == "done"
+
+
+def test_finish_from_todo(cards_db):
+  index = cards_db.add_card(Card("create a course", state="todo"))
+  cards_db.finish(index)
+  card = cards_db.get_card(index)
+  assert card.state == "done"
+```
+
+The test functions are very similar. The only difference is the starting state and the summary. Because we only have three states, it’s not overly terrible to write essentially the same code three times, but it does seem like a waste.
+
+One way to reduce the redundant code is to combine them into the same function, like this:
+
+```python
+from cards.api import Card
+
+
+def test_finish(cards_db):
+  for c in [
+    Card("write a book", state="done"),
+    Card("second edition", state="in prog"),
+    Card("create a course", state="todo"),
+  ]:
+    index = cards_db.add_card(c)
+    cards_db.finish(index)
+    card = cards_db.get_card(index)
+    assert card.state == "done"
+```
+
+This sorta works, but has problems.
+
+It passes, and we have eliminated the redundant code. Woohoo! But, there are other problems:
+
+* We have one test case reported instead of three.
+* If one of the test cases fails, we really don’t know which one without looking at the traceback or some other debugging information.
+* If one of the test cases fails, the test cases following the failure will not be run. pytest stops running a test when an assert fails.
+
+pytest parametrization is a great fit to solve this kind of testing problem. We’ll start with function parametrization, then fixture parametrization, and finish up with pytest_generate_tests.
+
+## Parametrizing Functions
+
+To parametrize a test function, add parameters to the test definition and use the @pytest.mark.parametrize() decorator to define the sets of arguments to pass to the test, like this:
+
+```python
+import pytest
+from cards.api import Card
+
+
+@pytest.mark.parametrize(
+  "start_summary, start_state",
+  [
+    ("write a book", "done"),
+    ("second edition", "in prog"),
+    ("create a course", "todo")
+  ]
+)
+def test_finish(cards_db, start_summary, start_state):
+  initial_card = Card(summary=start_summary, state=start_state)
+  index = cards_db.add_card(initial_card)
+
+  cards_db.finish(index)
+
+  card = cards_db.get_card(index)
+  assert card.state == "done"
+```
+
+The test_finish() function now has its original cards_db fixture as a parameter, but also two new parameters: start_summary and start_state. These match directly to the first argument to @pytest.mark.parametrize().
+
+The first argument to @pytest.mark.parametrize() is a list of names of the parameters. They are strings and can be an actual list of strings, as in ```["start_summary", "start_state"]```, or they can be a comma-separated string, as in "start_summary, start_state". The second argument to @pytest.mark.parametrize() is our list of test cases. Each element in the list is a test case represented by a tuple or list that has one element for each argument that gets sent to the test function.
+
+## Parametrizing Fixtures
+
+When we used function parametrization, pytest called our test function once each for every set of argument values we provided. With fixture parametrization, we shift those parameters to a fixture. pytest will then call the fixture once each for every set of values we provide. Then downstream, every test function that depends on the fixture will be called, once each for every fixture value.
+
+Also, the syntax is different:
+
+```python
+import pytest
+from cards.api import Card
+
+
+@pytest.fixture(params=["done", "in prog", "todo"])
+def start_state(request):
+  return request.param
+
+
+def test_finish(cards_db, start_state):
+  c = Card("arbitrary summary", state=start_state)
+  index = cards_db.add_card(c)
+  cards_db.finish(index)
+  card = cards_db.get_card(index)
+  assert card.state == "done"
+```
+
+What happens is pytest ends up calling start_state() three times, once each for all values in params. Each value of params is saved to request.param for the fixture to use. Within start_state() we could have code that depends on the parameter value. However, in this case, we’re just returning the parameter value.
+
+The test_finish() function is identical to the test_finish_simple() function we used in function parametrization, but with no parametrize decorator. Because it has start_state as a parameter, pytest will call it once for each value passed to the start_state() fixture.
+
+At first glance, fixture parametrization serves just about the same purpose as function parametrization, but with a bit more code. There are times where there is benefit to fixture parametrization.
+
+Fixture parametrization has the benefit of having a fixture run for each set of arguments. This is useful if you have setup or teardown code that needs to run for each test case—maybe a different database connection, or different contents of a file, or whatever.
+
+It also has the benefit of many test functions being able to run with the same set of parameters. All tests that use the start_state fixture will all be called three times, once for each start state.
+
+Fixture parametrization is also a different way to think about the same problem. Even in the case of testing finish(), if I’m thinking about it in terms of “same test, different data,” I often gravitate toward function parametrization. But if I’m thinking about it as “same test, different start state,” I gravitate toward fixture parametrization
+
