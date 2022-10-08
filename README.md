@@ -445,3 +445,7 @@ Here’s a rundown of each scope value:
    * Run once per session. All test methods and functions using a fixture of session scope share one setup and teardown call.
 
 Scope is defined with the fixture. I know this is obvious from the code, but it’s an important point to make sure you fully grok. The scope is set at the definition of a fixture, and not at the place where it’s called. The test functions that use a fixture don’t control how often a fixture is set up and torn down.
+
+# 4. Builtin Fixtures
+
+\-
