@@ -895,3 +895,12 @@ Both coverage.py and pytest-cov are third-party packages that need to be install
 To run tests with coverage.py, you need to add the --cov flag and provide either a path to the code you want to measure, or the installed package you are testing. In our case, the Cards project is an installed package, so we’ll test it using --cov=cards.
 
 # 10. Mocking
+
+## Mocking Tests Implementation, Not Behavior
+
+One of the biggest problems when using mocks is that when we are using mocks in a test, we are no longer testing behavior, but testing implementation. Focusing tests on testing implementation is dangerous and time-consuming. A completely valid refactoring, say changing a variable name, might break tests if that particular variable was being mocked.
+
+We have a name for tests that break during valid refactoring: change detector tests. We want most of our tests to fail only when valid breaks in behavior occur. When tests fail whenever the code changes, they are change detector tests, and are usually more trouble than they are worth.
+
+Are there any benefits to mocking? Of course. There are times when it’s the simplest way to generate exceptions or error conditions, and make sure your code handles those correctly. There are also times where testing behavior is unreasonable, like accessing payment API or sending email. In those cases, making sure your code calls a particular API method when its supposed to, with the correct parameters, is a decent option for testing. However, it’s good to know what you are getting into when testing implementation over behavior.
+
