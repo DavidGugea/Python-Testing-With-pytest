@@ -894,6 +894,4 @@ Both coverage.py and pytest-cov are third-party packages that need to be install
 
 To run tests with coverage.py, you need to add the --cov flag and provide either a path to the code you want to measure, or the installed package you are testing. In our case, the Cards project is an installed package, so we’ll test it using --cov=cards.
 
-
-
-
+# 10. Mocking
