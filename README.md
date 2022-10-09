@@ -635,3 +635,80 @@ These are the most commonly used of these builtins:
 * @pytest.mark.skipif()
 * @pytest.mark.xfail()
 
+---
+---
+
+# Part II - Working with Projects
+
+---
+---
+
+# 7. Strategy
+
+## Determining Test Scope
+
+Different projects have different test goals and requirements. Critical systems like heart monitoring systems, air traffic control systems, and smart braking systems require exhaustive testing at all levels. And then there are tools to make animated gifs. Most software is somewhere in between.
+
+We will almost always want to test the behavior of the user visible functionality. However, there are quite a few other questions we need to consider when determining how much testing we need to do:
+
+* Is security a concern? This is especially important if you save any confidential information. report erratum • discuss
+* Performance? Do interactions need to be fast? How fast?
+* Loading? Can you handle lots of people with lots of requests? Are you expecting to need to? If so, you should test for that.
+* Input validation? For really any system that accepts input from users, we should validate the data before acting on it.
+
+All projects will need to have functionality or feature testing. However, even with functionality testing alone, we need to decide which features need testing and at what priority. Then for each feature, we need to decide on test cases.
+
+Using a methodical approach makes all of this fairly straightforward. We’ll go through all of this for the Cards project as an example. We’ll begin by prioritizing features and then generating test cases. But first, let’s take a look at how your project’s software architecture can influence the testing strategy you choose.
+
+The idea of testing enough so that you can sleep at night may have come from software systems where developers have to be on call to fix software if it stops working in the middle of the night. It’s been extended to include sleeping soundly, knowing that your software is well tested. Although it’s a very informal concept, the idea is helpful as we evaluate what features to test and what test cases are needed in the following sections.
+
+## Considering Software Architecture
+
+How your application is set up—its software architecture—is an important consideration when determining a testing strategy. Software architecture pertains to how your project’s software is organized, what APIs are available, what the interfaces are, where code complexity lives, modularity, and so much more. In relation to testing, we need to know how much of the system we need to test and what the entry points are.
+
+As a simple example, let’s say we’re testing code that exists in one module, is intended to be used on the command line, has no interactive components other than print output, and has no API. Also, it’s not written in Python. We have no choices then. Our only option is to test it as a black box. We’ll have our test code call it with different parameters and state and watch the output.
+
+If the code is written in Python and is importable, and we can test the different parts of it by calling functions within the module, we then have choices. We can still test it as before, as a black box. But we can also test the functions inside separately if we want to.
+
+This concept scales well. If the software under test is designed as a Python package with lots of submodules, we can still test at the CLI level, or we can zoom in a bit and test the modules, or we can zoom in further and test the functions within the modules. Scaling up one more, we have larger systems that are designed as interacting subsystems, each possibly with multiple packages and modules.
+
+All of this affects our testing strategy in many ways:
+
+* At what level should we be testing? The top user interface? Something lower? Subsystem? All levels?
+* How easy is it to test at different levels? UI testing is often the most difficult, but can also be easier to tie to customer features. Testing for individual functions might be easier to implement, but harder to tie to customer requirements.
+* Who is responsible for the different levels and the testing of each? If you are supplying a subsystem, are you only responsible for that subsystem? Is someone else doing the system testing? If so, it’s an easy choice: test your own subsystem. However, it would be good to be involved at least with knowing what’s being tested at the system level.
+
+## Evaluating the Features to Test
+
+Before we create the cases we want to test, we first need to evaluate what features to test. When you have a lot of functionality and features to test, you have to prioritize the order of developing tests. At least a rough idea of order helps.
+
+I generally prioritize features to test based on the following factors:
+
+* Recent—New features, new areas of code, new functionality that has been recently repaired, refactored, or otherwise modified
+* Core—Your product’s unique selling propositions (USPs). The essential functions that must continue to work in order for the product to be useful
+* Risk—Areas of the application that pose more risk, such as areas important to customers but not used regularly by the development team or parts that use third-party code you don’t quite trust
+* Problematic—Functionality that frequently breaks or often gets defect reports against it
+
+* Expertise—Features or algorithms understood by a limited subset of people
+
+## Creating Test Cases
+
+As with determining the goals and scope of your test strategy, generating test cases is also easier if you take a methodical approach. For generating an initial set of test cases, these criteria will be helpful:
+
+* Start with a non-trivial, “happy path” test case.
+
+* Then look at test cases that represent
+
+  * interesting sets of input,
+
+  * interesting starting states,
+
+  * interesting end states, or
+
+  * all possible error states.
+
+
+Some of these test cases will overlap. If a test case satisfies more than one of the above criteria, that’s fine.
+
+
+
