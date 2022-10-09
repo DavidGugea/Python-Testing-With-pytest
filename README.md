@@ -876,4 +876,24 @@ Here’s an example:
 ![Figure](ScreenshotsForNotes/Chapter8/AvoidingNameCollision.PNG)
 
 
+# 9. Coverage
+
+## Introduction
+
+In Chapter 7, Strategy, on page 99, we generated an initial list of test cases based on a test strategy by analyzing the user-facing features of the Cards project. The tests in the ch7 directory of the book’s source code1 are an implementation of those test cases, which test Cards through the API. But how do we know if these tests are thoroughly testing our code? That’s where code coverage comes in.
+
+Tools that measure code coverage watch your code while a test suite is being run and keep track of which lines are hit and which are not. That measurement— called line coverage—is calculated by dividing the total number of lines run divided by the total lines of code. Code coverage tools can also tell you if all paths are taken in control statements, a measurement called branch coverage.
+
+Code coverage cannot tell you if your test suite is good; it can only tell you how much of the application code is getting hit by your test suite. But that in itself is useful information.
+
+Coverage.py2 is the preferred Python coverage tool that measures code coverage. And pytest-cov3 is a popular pytest plugin often used in conjunction with coverage. py that makes the command line a little shorter. In this chapter, we’ll use both tools to see if we missed anything important in the test suite we developed in the last chapter for the Cards project.
+
+## Using coverage.py with pytest-cov
+
+Both coverage.py and pytest-cov are third-party packages that need to be installed before use:
+
+To run tests with coverage.py, you need to add the --cov flag and provide either a path to the code you want to measure, or the installed package you are testing. In our case, the Cards project is an installed package, so we’ll test it using --cov=cards.
+
+
+
 
