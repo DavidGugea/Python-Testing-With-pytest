@@ -943,3 +943,18 @@ tox uses project information in either setup.py or pyproject.toml for the packag
 5. runs your tests.
 
 After all environments are tested, tox reports a summary of how they all did. This makes a lot more sense when you see it in action, so let’s look at how to set up the Cards project to use tox
+
+# 12. Testing Scripts and Applications
+
+## Introduction
+
+The sample Cards application is an installable Python package that is installed with pip install. Once it is installed, the test code can simply import cards to access the application’s capabilities, and test away. However, not all Python code is installable with pip, but still needs to be tested.
+
+In this chapter, we’ll look at techniques for testing scripts and applications that cannot be installed with pip. To be clear on terms, the following definitions apply in this chapter:
+
+* A script is a single file containing Python code that is intended to be run directly from Python, such as python my_script.py.
+
+* An importable script is a script in which no code is executed when it is imported. Code is executed only when it is run directly.
+
+* An application refers to a package or script that has external dependencies defined in a requirements.txt file. The Cards project is also an application, but it is installed with pip. External dependencies for Cards are defined in its pyproject.toml file and pulled in during pip install. In this chapter, we’ll specifically look at applications that cannot or choose to not use pip
+
