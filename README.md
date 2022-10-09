@@ -958,3 +958,6 @@ In this chapter, we’ll look at techniques for testing scripts and applications
 
 * An application refers to a package or script that has external dependencies defined in a requirements.txt file. The Cards project is also an application, but it is installed with pip. External dependencies for Cards are defined in its pyproject.toml file and pulled in during pip install. In this chapter, we’ll specifically look at applications that cannot or choose to not use pip
 
+# 13. Debugging Test Failures
+
+\-
