@@ -961,3 +961,124 @@ In this chapter, we’ll look at techniques for testing scripts and applications
 # 13. Debugging Test Failures
 
 \-
+
+---
+---
+
+# Part III - Booster Rockets
+
+---
+---
+
+# 14. Third-Party Plugins
+
+## Introduction
+
+As powerful as pytest is right out of the box, it gets even better when we add plugins to the mix. The pytest code base is designed to allow customization and extensions, and there are hooks available to allow modifications and improvements through plugins.
+
+## Finding Plugins
+
+You can find third-party pytest plugins in several places.
+
+* https://docs.pytest.org/en/latest/reference/plugin_list.html
+
+   * The main pytest documentation site includes an alphabetized list of plugins pulled from pypi.org. It’s a big list.
+
+* https://pypi.org
+
+   * The Python Package Index (PyPI) is a great place to get lots of Python packages, but it is also a great place to find pytest plugins. When looking for pytest plugins, it should work pretty well to search for pytest, pytest- or -pytest, as most pytest plugins either start with pytest- or end in -pytest. You can also filter by classifier "Framework::Pytest", which will include packages that include a pytest plugin but aren’t named pytest- or -pytest, such as Hypothesis and Faker.
+
+* https://github.com/pytest-dev
+
+   * The pytest-dev group on GitHub is where the pytest source code is kept. It’s also where you can find many popular pytest plugins. For plugins, the pytest-dev group is intended as a central location for popular pytest plugins and to share some of the maintenance responsibility. Refer to “Submitting Plugins to pytest-dev” on the docs.pytest.org website1 for more information.
+
+* https://docs.pytest.org/en/latest/how-to/plugins.html
+
+   * The main pytest documentation site has a page that talks about installing and using pytest plugins, and lists a few common plugins.
+
+## Installing Plugins
+
+pytest plugins are installed with pip, just like the other Python packages you’ve already installed in the earlier chapters in this book.
+
+For example:
+
+```$ pip install pytest-cov```
+
+This installs the latest stable version from PyPI. However, pip is quite powerful and can install packages from other places like local directories and Git repositories. See Appendix 2, pip, on page 237 for more information.
+
+## Exploring the diversitoy of pytest plugins
+
+The Plugin List from the main pytest documentation site2 lists almost 1000 plugins last time I checked. That’s a lot of plugins. Let’s take a look at a small subset of plugins that are both useful to lots of people and show the diversity of what we can do with plugins.
+
+All of the following plugins are available via PyPI.
+
+### Plugins that change the normal test run flow
+
+pytest, by default, runs our tests in a predictable flow. Given a single directory of test files, pytest will run each file in alphabetical order. Within each file, each test is run in the order it appears in the file.
+
+Sometimes it’s nice to change that order. The following plugins in some way change the normal test run flow:
+
+*  pytest-order—Allows us to specify the order using a marker
+
+* pytest-randomly—Randomizes the order, first by file, then by class, then by test
+
+* pytest-repeat—Makes it easy to repeat a single test, or multiple tests, a specific number of times
+
+* pytest-rerunfailures—Re-runs failed tests. Helpful for flaky tests
+
+* pytest-xdist—Runs tests in parallel, either using multiple CPUs on one machine, or multiple remote machines
+
+### Plugins that alter or enhance output
+
+The normal pytest output shows mostly dots for passing tests, and characters for other output. Then you’ll see lists of test names with outcome if you pass in -v. However, there are plugins that change the output.
+
+* pytest-instafail—Adds an --instafail flag that reports tracebacks and output from failed tests right after the failure. Normally, pytest reports tracebacks and output from failed tests after all tests have completed.
+
+* pytest-sugar—Shows green checkmarks instead of dots for passing tests and has a nice progress bar. It also shows failures instantly, like pytestinstafail.
+
+* pytest-html—Allows for html report generation. Reports can be extended with extra data and images, such as screenshots of failure cases.
+
+### Plugins for web development
+
+pytest is used extensively for testing web projects, so it’s no surprise there’s a long list of plugins to help with web testing.
+
+* pytest-selenium—Provides fixtures to allow for easy configuration of browserbased tests. Selenium is a popular tool for browser testing.
+
+* pytest-splinter—Built on top of Selenium as a higher level interface, this allows Splinter to be used more easily from pytest.
+
+* pytest-django and pytest-flask—Help make testing Django and Flask applications easier with pytest. Django and Flask are two of the most popular web frameworks for Python.
+
+### Plugins for fake data
+
+We used Faker in Combining Markers with Fixtures, on page 88 to generate card summary and owner data. There are many cases in different domains where it’s helpful to have generated fake data. Not surprisingly, there are several plugins to fill that need.
+
+* Faker—Generates fake data for you. Provides faker fixture for use with pytest
+
+* model-bakery—Generates Django model objects with fake data.
+
+* pytest-factoryboy—Includes fixtures for Factory Boy, a database model data generator
+
+* pytest-mimesis—Generates fake data similar to Faker, but Mimesis is quite a bit faster
+
+### Plugins that extend pytest functionality
+
+All plugins extend pytest functionality, but I was running out of good category names. This is a grab bag of various cool plugins.
+
+* pytest-cov—Runs coverage while testing
+
+* pytest-benchmark—Runs benchmark timing on code within tests
+
+* pytest-timeout—Doesn’t let tests run too long
+
+* pytest-asyncio—Tests async functions
+
+* pytest-bdd—Writes behavior-driven development (BDD)–style tests with pytest
+
+* pytest-freezegun—Freezes time so that any code that reads the time will get the same value during a test. You can also set a particular date or time.
+
+* pytest-mock—A thin-wrapper around the unittest.mock patching API
+
+While many may find the plugins listed in this section helpful, two plugins in particular find near universal approval in helping to speed up testing and finding accidental dependencies between tests: pytest-xdist and pytest-randomly. Let’s take a closer look at those next.
+
+
+
