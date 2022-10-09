@@ -904,3 +904,42 @@ We have a name for tests that break during valid refactoring: change detector te
 
 Are there any benefits to mocking? Of course. There are times when it’s the simplest way to generate exceptions or error conditions, and make sure your code handles those correctly. There are also times where testing behavior is unreasonable, like accessing payment API or sending email. In those cases, making sure your code calls a particular API method when its supposed to, with the correct parameters, is a decent option for testing. However, it’s good to know what you are getting into when testing implementation over behavior.
 
+# 11. tox and Continuous Integration
+
+## Introduction
+
+When working with a team of people who are all working on the same codebase, continuous integration (CI) offers an amazing productivity boost. CI refers to the practice of merging all developers’ code changes into a shared repository on a regular basis—often several times a day. CI is also quite helpful even when working on a project alone.
+
+Most tools used for CI run on a server (GitHub Actions is one example). tox is an automation tool that works a lot like a CI tool but can be run both locally and in conjunction with other CI tools on a server.
+
+In this chapter, we take a look at tox and how to set it up in the Cards application to help us with testing Cards locally. Then we’ll set up testing on GitHub using GitHub Actions. First, let’s review what exactly CI is and how it fits into the testing universe.
+
+## What is Continous Integration?
+
+In software engineering, the name “continuous integration” only makes sense in the context of history. Before the implementation of CI, software teams used version control to keep track of code updates, and different developers would add a feature or fix a bug on the separate code branches. At some point, the code was merged, built, and (hopefully) tested. The frequency of this merge varied from “when your code is ready, merge it” to regularly scheduled merges, maybe weekly or every other week. This merge phase was called integration because the code is being integrated together.
+
+With this sort of version control, code conflicts happened often. Therefore, some teams had dedicated people to do the merge and debug merge conflicts, sometimes pulling in other developers to help with decisions. Some errors in merging were not found until testing. And some merge errors were not found until much later.
+
+This is obviously not a fun way to write software. Thus, CI was born.
+
+CI tools build and run tests all on their own, usually triggered by a merge request. Because the build and test stages are automated, developers can integrate more frequently, even several times a day. This frequency makes it so the code change between branches is smaller, reducing the chance of merge conflicts. Combining that with the advances in automated merging present in tools like Git, we get the “continuous” part of the continuous integration process.
+
+CI tools traditionally automate the process of build and test. The actual merge to the final main code branch can sometimes be handled by the CI systems. However, more frequently, the tools stop after test. The software team can then continue with a code review and manually click a “merge” button in the revision control system.
+
+At first glance, CI seems to be most helpful for teams of people. However, the automation, convenience, and consistency that CI brings to a project are also valuable to single-person projects.
+
+## Introduction tox
+
+tox1 is a command-line tool that allows you to run your complete suite of tests in multiple environments. tox is a great starting point when learning about CI. Although it strictly is not a CI system, it acts a lot like one, and can run locally. We’re going to use tox to test the Cards project in multiple versions of Python. However, tox is not limited to just Python versions. You can use it to test with different dependency configurations and different configurations for different operating systems.
+
+In gross generalities, here’s a mental model for how tox works:
+
+tox uses project information in either setup.py or pyproject.toml for the package under test to create an installable distribution of your package. It looks in tox.ini for a list of environments, and then for each environment, tox
+
+1. creates a virtual environment in a .tox directory,
+2. pip installs some dependencies,
+3. builds your package,
+4. pip installs your package, and
+5. runs your tests.
+
+After all environments are tested, tox reports a summary of how they all did. This makes a lot more sense when you see it in action, so let’s look at how to set up the Cards project to use tox
