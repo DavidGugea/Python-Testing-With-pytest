@@ -1080,5 +1080,6 @@ All plugins extend pytest functionality, but I was running out of good category 
 
 While many may find the plugins listed in this section helpful, two plugins in particular find near universal approval in helping to speed up testing and finding accidental dependencies between tests: pytest-xdist and pytest-randomly. Let’s take a closer look at those next.
 
+# 15. Building Plugins
 
-
+\-
