@@ -710,5 +710,170 @@ As with determining the goals and scope of your test strategy, generating test c
 
 Some of these test cases will overlap. If a test case satisfies more than one of the above criteria, that’s fine.
 
+# 8. Configuration Files
+
+## Introduction
+
+Configuration files—those non-test files that affect how pytest runs—save time and duplicated work. If you find yourself always using certain flags in your tests, like --verbose or --strict-markers, you can tuck those away in a config file and not have to type them all the time. In addition to configuration files, a handful of other files are useful when using pytest to make work of writing and running tests easier. We’ll cover all of them in this chapter.
+
+## Understanding pytest Configuration Files
+
+Let’s run down the non-test files relevant to pytest:
+
+* pytest.ini: This is the primary pytest configuration file that allows you to change pytest’s default behavior. Its location also defines the pytest root directory, or rootdir.
+* conftest.py: This file contains fixtures and hook functions. It can exist at the rootdir or in any subdirectory.
+* ```__init__.py```: When put into test subdirectories, this file allows you to have identical test file names in multiple test directories.
+* tox.ini, pyproject.toml, and setup.cfg: These files can take the place of pytest.ini. If you already have one of these files in a project, you can use it to save pytest settings.
+     * tox.ini is used by tox, the command-line automated testing tool we take a look at in Chapter 11, tox and Continuous Integration, on page 151.          
+     * pyproject.toml is used for packaging Python projects and can be used to save settings for various tools, including pytest.
+     * setup.cfg is also used for packaging, and can be used to save pytest settings.
+
+Let’s look at some of these files in the context of an example project directory structure:
+
+![Figure](ScreenshotsForNotes/Chapter8/TestStructure.PNG)
+
+## Saving Settings and Flags in pytest.ini
+
+Let’s look at an example pytest.ini file:
+
+```ini
+[pytest]
+addopts =
+    --strict-markers
+    --strict-config
+    --ra
+
+testpaths = tests
+
+markers =
+    smoke: subset of tests
+    exception: check for expected exceptions
+```
+
+The file starts with [pytest] to denote the start of the pytest settings. It may seem weird that we have to include this notation, given that it’s strictly a pytest configuration file. However, including [pytest] allows the pytest ini parsing to treat pytest.ini and tox.ini identically. After that are the individual settings, each on their own line (or multiple lines) in the form of ```<setting> = <value>```.
+
+Configuration settings that allow more than one value often allow values to be written on either one line or on multiple lines. For instance, we could have written the options all on one line like this:
+
+```addopts = --strict-markers --strict-config -ra```
+
+Splitting them up into one line per flag is a style thing. Markers are different, and only one marker per line is allowed.
+
+This example is a basic pytest.ini file that includes items I almost always have set. Let’s run through the options and settings briefly:
+
+* ```addopts = --strict-markers --strict-config -ra```
+     * The addopts setting enables us to list the pytest flags we always want to run in this project.
+     * --strict-markers tells pytest to raise an error for any unregistered marker encountered in the test code as opposed to a warning. Turn this on to avoid marker-name typos.
+     * --strict-config tells pytest to raise an error for any difficulty in parsing configuration files. The default is a warning. Turn this on to avoid configuration-file typos going unnoticed.
+     * -ra tells pytest to display extra test summary information at the end of a test run. The default is to show extra information on only test failures and errors. The a part of -ra tells pytest to show information on everything except passing tests. This adds skipped, xfailed, and xpassed to the failure and error tests.
+* ```testpaths = tests```
+     * The testpaths setting tells pytest where to look for tests if you haven’t given a file or directory name on the command line. Setting testpaths to tests tells pytest to look in the tests directory.          * At first glance, setting testpaths to tests may seem redundant because pytest will look there anyway, and we don’t have any test_ files in our src or docs directories. However, specifying a testpaths directory can save a bit of startup time, especially if our docs or src or other directories are quite large.
+* markers = ...
+     *  The markers setting is used to declare markers, as we did in Selecting Tests with Custom Markers, on page 79.
+
+You can specify many more configuration settings and command-line options in configuration files, and you can see all of them by running pytest --help.
+
+## Using tox.ini, pyproject.toml, or setup.cfg in place of pytest.ini
+
+If you are writing tests for a project that already has a pyproject.toml, tox.ini, or setup.cfg file in place, you can still use pytest.ini to store your pytest configuration settings. Or you can store your configuration settings in one of these alternate configuration files. The syntax is a little different in the two non-ini files, so we’ll take a look at each one.
+
+### ```tox.ini```
+
+A tox.ini file contains settings for tox, which is covered in more detail in Chapter 11, tox and Continuous Integration, on page 151. It can also include a [pytest] section. And because it’s also an .ini file, the tox.ini example below is almost identical to the pytest.ini example shown earlier. The only difference is that there will also be a [tox] section.
+
+A sample tox.ini file looks like this:
+
+```ini
+[tox]
+; tox specific settings
+
+[pytest]
+addopts =
+    --strict-markers
+    --strict-config
+    --ra
+
+testpaths = tests
+
+markers =
+    smoke: subset of tests
+    exception: check for expected exceptions
+```
+
+### ```pyproject.toml```
+
+The pyproject.toml file started as a file intended for packaging Python projects; however, the Poetry1 and Flit2 projects use pyproject.toml for defining a project settings. The Setuptools library, which has been the standard packaging tool before Flit and Poetry came around, hasn’t traditionally used pyproject.toml.
+
+However, you can now use Setuptools with pyproject.toml.3 In 2018, a Python code formatter named Black4 started to gain popularity. The only way to configure Black is to use pyproject.toml. Since then, more and more tools have started to support storing configuration in pyproject.toml, including pytest.
+
+Because TOML5 is a different configuration file standard than .ini files, the format is a little different, but fairly easy to get used to. The format looks like this:
+
+```toml
+[tool.pytest.ini_options]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--ra"
+]
+
+testpaths = "tests"
+
+markers = [
+    "smoke: subset of tests",
+    "exception: check for expected exceptions"
+]
+```
+
+Instead of [pytest], you start the section with [tool.pytest.ini_options]. The setting values need quotes around them, and lists of setting values need to be lists of strings in brackets.
+
+### ```setup.cfg```
+
+The setup.cfg file format is more like .ini. Here’s what our configuration example looks like as a setup.cfg file:
+
+```cfg
+[tool:pytest]
+addopts =
+    --strict-markers
+    --strict-config
+    --ra
+
+testpaths = tests
+
+markers =
+    smoke: subset of tests
+    exception: check for expected exceptions
+```
+
+Here, the only noticeable difference between this and pytest.ini is the section specifier of [tool:pytest].
+
+However, the pytest documentation warns that the .cfg parser is different then the .ini file parser, and that difference may cause problems that are hard to track down.
+
+## Determining a Root Directory and Config File
+
+Even before it starts looking for test files to run, pytest reads the configuration file—the pytest.ini file or the tox.ini, setup.cfg, or pyproject.toml files that contain a pytest section.
+
+If you’ve passed in a test directory, pytest starts looking there. If you’ve passed in multiple files or directories, pytest starts at the common ancestor of all of them. If you don’t pass in a file or directory, it starts at the current directory. If pytest finds a configuration file at the starting directory, that’s the root. If not, pytest goes up the directory tree until it finds a configuration file that has a pytest section in it. Once pytest finds a configuration file, it marks the directory where it found it as the root directory, or rootdir. This root directory is also the relative root of test node IDs. It also tells you where it found a configuration file.
+
+The rules around which configuration file to use and where the root directory is can seem confusing at first. However, having a well-defined rootdir search process and having pytest display what the rootdir is allows us to run tests at various levels and be assured that pytest will find the correct configuration file. For instance, even if you change directories into a test subdirectory deep inside the tests directory, pytest will still find your configuration file at the top of the project.
+
+Even if you don’t need any configuration settings, it’s still a great idea to place an empty pytest.ini at the top of your project. If you don’t have any configuration files, pytest will keep searching to the root of your file system. At best, this will just cause a slight delay while pytest is looking. At worst, it will find one along the way that has nothing to do with your project.
+
+## Sharing Local Fixtures and Hooks Functions with conftest.py
+
+The conftest.py file is used to store fixtures and hook functions. (Fixtures are described in Chapter 3, pytest Fixtures, on page 31, and hook functions are discussed in Chapter 15, Building Plugins, on page 205.) You can have as many conftest.py files as you want in a project, even one per test subdirectory. Anything defined in a conftest.py file applies to tests in that directory and all subdirectories.
+
+If you have one top conftest.py file at the tests level, fixtures defined there can be used with all tests in the top-level tests directory and below. Then if there are specific fixtures that only apply to a subdirectory, they can be defined in another conftest.py file in that subdirectory. For instance, the GUI tests might need different fixtures than the API tests, and they might also want to share some.
+
+However, it’s a good idea to try to stick to one conftest.py file so that you can find fixture definitions easily. Even though you can always find where a fixture is defined by using pytest --fixtures -v, it’s still easier if you know it’s either in the test file you are looking at or in one other file, the conftest.py file.
+
+## Avoiding Test File Name Collision
+
+The ```__init__.py``` file affects pytest in one way and one way only: it allows you to have duplicate test file names.
+
+If you have ```__init__.py``` files in every test subdirectory, you can have the same test file name show up in multiple directories. That’s it—the only reason to have a ```__init__.py``` file.
+
+Here’s an example:
+
+![Figure](ScreenshotsForNotes/Chapter8/AvoidingNameCollision.PNG)
+
 
 
